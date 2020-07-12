@@ -1,13 +1,4 @@
-//Requirements
-const express = require("express");
-const app = express();
-
-app.use(express.static("public"));
-app.get("/", (request, response) => {
-  console.log("🏓 " + Date.now() + " Website Ping Received");
-  response.sendStatus(200);
-});
-app.listen(process.env.PORT);
+require('dotenv').config()
 const database = require('quick.db');
 const botconfig = require("./botconfig.json");
 const { MessageEmbed, Collection, Client } = require("discord.js");
