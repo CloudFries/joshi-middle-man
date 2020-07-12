@@ -1,75 +1,50 @@
 const {MessageEmbed} = require('discord.js');
-const database = require('quick.db');
-const userTickets = new Map();
+const database = require('quick.db')
 module.exports={
-    name: 'trade',
+    name: 'new',
     category: 'info',
     description: 'text here',
     run: async(bot,message,args)=>{
       
-      let supportCategory = message.guild.channels.cache.find(category => category.name === "Tickets")
+                  const errorEmbed = new MessageEmbed()
+      .setTitle("Error!")
+         .setDescription("You did not specify a time!")
+         .setColor("RED")
+         .setTimestamp()
       
-      const trader = message.mentions.members.first()
-      if(!trader) return message.reply("**Please mention someone to trade!**")
-      if(args[1]) return message.reply("Invalid formatting!")
-      
-      if (message.guild.me.permissions.has('MANAGE_CHANNELS') && !supportCategory) {
-        supportCategory = await message.guild.channels.create('Tickets', {
-          type: 'category',
-          
-        });
-      };
-      
-      if (!message.guild.me.permissions.has("MANAGE_CHANNELS") && !supportCategory) {
-        message.channel.send(`Sorry but I do not have permission to create a category!`)
+      let supportCategory = database.get(`tickets_${message.guild.id}`)
+    if(supportCategory === null) {
+        return message.channel.send(errorEmbed.setDescription("There is no Ticket Category set! You can set this by using `setcat (Category ID)`"))
       }
       
-      if (!message.guild.roles.cache.find(role => role.name === "Ticket Staff")) {
-        await (message.guild.roles.create({
-          name: 'Ticket Staff',
-          color: 'BLUE',
-        }));
-      };
+      let channelName = `ticket-${message.author.username}`.toLowerCase()
       
-      const supportrole = message.guild.roles.cache.find(role => role.name === "Ticket Staff")
-      
-      if (!supportrole) {
-        return message.channel.send(`There is no support team role! Please create a role named "Ticket Staff"`)
-      }
-      
-      const ticketAmt = database.get(`tickets_${message.guild.id}`)
-      
-      let channelName = `ticket-${message.author.username}-${message.author.discriminator}`.toLowerCase()
-      channelName = channelName.replace(/ /g, '-')
-      channelName = channelName.replace(/\W/g, '')
-      
+        const trade = message.mentions.users.first()
+        
       if(message.guild.channels.cache.some(channel =>
-          channel.name.toLowerCase() === channelName)) { 
+          channel.topic === `Ticket Owner: <@${message.author.id}>`)) { 
         message.reply("**You already have a ticket open!**")
       } else {
+        
+      const sr = database.get(`staff_${message.guild.id}`)
+      if(sr === null | 0) return message.reply("There is no Ticket Staff role set for this server!")
       
-      console.log(channelName)
-      
-      message.guild.channels.create(channelName, { parent: supportCategory.id, topic: `Ticket Owner: <@${message.author.id}>` }).then(c => {
-        const sr = message.guild.roles.cache.find(role => role.name === "Ticket Staff")
+      message.guild.channels.create(channelName, { parent: supportCategory, topic: `Ticket Owner: <@${message.author.id}>` }).then(c => {
         const everyone = message.guild.roles.cache.find(role => role.name === "@everyone")
-      //   userTickets.set(message.author.id, c.id)
-      //   if(userTickets.has(message.author.id)) {
-      //   message.channel.send("**You already have a ticket open!**");
-      // }
         c.updateOverwrite(sr, {
+          SEND_MESSAGES: true,
+          VIEW_CHANNEL: true,
+        });
+        c.updateOverwrite(trade, {
           SEND_MESSAGES: true,
           VIEW_CHANNEL: true,
         });
         c.updateOverwrite(everyone, {
           SEND_MESSAGES: false,
           VIEW_CHANNEL: false,
+          MENTION_EVERYONE: false,
         });
         c.updateOverwrite(message.author, {
-          SEND_MESSAGES: true,
-          VIEW_CHANNEL: true,
-        });
-        c.updateOverwrite(trader, {
           SEND_MESSAGES: true,
           VIEW_CHANNEL: true,
         });
@@ -79,23 +54,24 @@ module.exports={
         .setTitle("Ticket Created")
         .setDescription(`<@${message.author.id}> Your support ticket channel is <#${c.id}>`)
         .setTimestamp()
-        .setFooter("Made by Cloud")
+        .setFooter("Made by Cloud", "https://cdn.discordapp.com/avatars/290143878315507712/7d6d046b57434d346a7bddacea80e25e.webp")
         message.channel.send(embed)
         
         let wEmbed = new MessageEmbed()
         .setColor("BLUE")
-        .setTitle("Members+ Middle Man")
-        .setDescription("**__Thanks for opening a ticket! Support will be with you shortly.__**\n\n- What are you trading?\n- What is the price?")
-        .addField("Ticket Owner:", `<@${message.author.id}>`)
+        .setTitle("Support Ticket")
+        .setDescription(`**__Thanks for opening a ticket! Support will be with you shortly.__**\n\n**Ticket Owner:** ${message.author}\n\n**Reason:** ${reason}`)
+        // .addField("Ticket Owner:", `<@${message.author.id}>`)
         .setTimestamp()
-        .setFooter("Made by Cloud")
-        c.send(`${message.author}, ${trader}, here is your ticket!`)
+        .setFooter("Made by Cloud", "https://cdn.discordapp.com/avatars/290143878315507712/7d6d046b57434d346a7bddacea80e25e.webp")
+        
+        c.send(`${message.author}, here is your ticket!`)
         c.send(wEmbed)
         
-        database.add(`tickets_${message.guild.id}`, 1)
+        database.add(`ticketAmt_${message.guild.id}`, 1)
+        database.add(`opentickets_${message.guild.id}`, 1)
         
       }).catch(console.error);
       }
-      
+  }
     }
-}
