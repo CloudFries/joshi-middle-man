@@ -1,7 +1,7 @@
 const {MessageEmbed} = require('discord.js');
 const database = require('quick.db')
 module.exports={
-    name: 'new',
+    name: 'trade',
     category: 'info',
     description: 'text here',
     run: async(bot,message,args)=>{
@@ -60,8 +60,7 @@ module.exports={
         let wEmbed = new MessageEmbed()
         .setColor("BLUE")
         .setTitle("Support Ticket")
-        .setDescription(`**__Thanks for opening a ticket! Support will be with you shortly.__**\n\n**Ticket Owner:** ${message.author}\n\n**Reason:** ${reason}`)
-        // .addField("Ticket Owner:", `<@${message.author.id}>`)
+        .setDescription(`**__Thanks for opening a ticket! Support will be with you shortly.__**\n\n**Ticket Owner:** ${message.author}`)
         .setTimestamp()
         .setFooter("Made by Cloud", "https://cdn.discordapp.com/avatars/290143878315507712/7d6d046b57434d346a7bddacea80e25e.webp")
         
